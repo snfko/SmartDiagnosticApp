@@ -1,9 +1,44 @@
-# Smart Diagnostic App
+name: Build Android APK
 
-تطبيق Android لواجهة التشخيص الذكي، مع اختيار حتى 5 صور، كاميرا، معاينة الصور، وتحليل حقيقي عبر Backend آمن.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
 
-- Package: `com.smartdiagnostic.app`
-- Version: `1.0.0`
-- Android target: 36
-- Build from phone: GitHub Actions
-- Backend: Node.js + OpenAI Responses API
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: ''
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      - name: Build APK
+        run: gradle assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartDiagnosticApp-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
